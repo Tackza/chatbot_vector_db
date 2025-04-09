@@ -1,0 +1,16 @@
+requests==2.31.0
+flask==2.3.3
+firebase-admin==6.2.0
+mysql-connector-python==8.*
+sentence-transformers==2.*
+torch>=1.10.0
+transformers>=4.18.0
+google-generativeai==0.3.*
+python-dotenv==1.0.*
+numpy==1.*
+flask
+flasgger
+flask_restful
+pyairtable
+gunicorn
+
