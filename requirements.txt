@@ -3,7 +3,7 @@ mysql-connector-python==8.*
 sentence-transformers==2.*
 torch>=1.10.0
 transformers>=4.18.0
-google-generativeai==0.3.*
+google-generativeai>=0.3.*
 python-dotenv==1.0.*
 numpy==1.*
 flask_restful
