@@ -6,6 +6,11 @@ from fastapi import FastAPI, HTTPException, Query, Body, status
 import uvicorn
 import requests
 import json
+from dotenv import load_dotenv
+import os
+
+# โหลดตัวแปรจากไฟล์ .env
+load_dotenv()
 
 # สร้าง FastAPI application
 app = FastAPI(
@@ -15,15 +20,16 @@ app = FastAPI(
 )
 
 # LINE Messaging API Token
-LINE_CHANNEL_ACCESS_TOKEN = "HqR5KgtSFnpkKMS+HPaTINdo/gzFW/0h/i4RLzMRlHN2vEQbmIwDTXnFSqD+0ZJNVbLLBwoAxx5JbvRjNG6GqtvntWwu784PrqiHfsXsCwPD/m9oIBAlZZ7dWKY73d417JSw46DdG9toEc3EuZX1DwdB04t89/1O/w1cDnyilFU="
+LINE_CHANNEL_ACCESS_TOKEN = os.environ.get("LINE_CHANNEL_ACCESS_TOKEN")
 LINE_API_URL = "https://api.line.me/v2/bot/message/reply"
 LINE_LOADING_URL = "https://api.line.me/v2/bot/chat/loading/start"
+
 
 connection = mysql.connector.connect(
   host = "gateway01.ap-southeast-1.prod.aws.tidbcloud.com",
   port = 4000,
   user = "2d1BmeMeYLLXjyZ.root",
-  password = "frbr9qv0ECdnhonm",
+  password = os.environ.get("PASSWORD_DB"),
   database = "chatbot_vector",
   # ssl_ca = "/etc/ssl/cert.pem",
   # ssl_verify_cert = True,
@@ -32,7 +38,7 @@ connection = mysql.connector.connect(
 
 embedder = SentenceTransformer("all-MiniLM-L6-v2")
 
-client = genai.Client(api_key="AIzaSyCmcfFFTxxGEHcZWfP8MD9cKx3PYxVjxgw") 
+client = genai.Client(api_key=os.environ.get("GEMINI_API_KEY")) 
 
 
 
@@ -69,21 +75,21 @@ def send_reply(reply_token, message_text):
 def generate_response(results_text, user_message):
     # สร้าง context จากผลลัพธ์ที่ได้
   context = "\n".join([
-        f"ชื่อสินค้า: {row[0]}, ราคา: {row[1]} บาท, แบรนด์: {row[2]}" for row in results_text
+        f"ชื่อสินค้า: {row[0]}, ราคา: {row[1]} บาท, ยี่ห้อ: {row[2]}" for row in results_text
     ])
   print(f"\nContext:\n{context}")
   prompt = f""" Answer the question based on the following context:\n{context}\n\nQuestion: {user_message}\nAnswer:"""
     
     # Add instruction to handle irrelevant questions
   system_prompt = """
-    คุณคือผู้ช่วยที่มีความรู้เกี่ยวกับสินค้าและราคาของสินค้าในร้านค้าออนไลน์ ไม่ตอบคำถามเกินไปจากข้อมูลที่มีในฐานข้อมูลของเรา 
+    นายคือแอดมินในร้านสินค้า IT ให้คำแนะนำ สินค้า ราคา บอกยี่ห้อด้วย ตอบด้วยความสุภาพครับ แต่ไม่ตอบคำถามเกินไปจากข้อมูลที่มีในฐานข้อมูลของเรา 
     """
   response = client.models.generate_content(
       model="gemini-2.0-flash",
       contents=prompt,
       config=types.GenerateContentConfig(
-          max_output_tokens=500,
-          temperature=0.1,
+          max_output_tokens=900,
+          temperature=0.5,
           system_instruction=system_prompt,
           )
       )
@@ -124,10 +130,6 @@ def query_db(user_message):
     
     return generate_response(result,user_message)
   
-  
-# results = query_db("intel core i5 ราคาถูกที่สุด")
-# print("\nรูปแบบข้อมูลดิบ:")
-# print(results)
 
 
 # GET endpoint สำหรับหน้าหลัก
